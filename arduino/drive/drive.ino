@@ -12,21 +12,21 @@ int port = 8182;
 char packet[16];
 int dataLength;
 
-Adafruit_MotorShield motor_shield = Adafruit_MotorShield(); 
+Adafruit_MotorShield motor_shield = Adafruit_MotorShield();
 
 Adafruit_DCMotor *left_motor = motor_shield.getMotor(LEFT_WHEEL);
 Adafruit_DCMotor *right_motor = motor_shield.getMotor(RIGHT_WHEEL);
 
 int whole_speed = 25;
-byte left_dir = FORWARD; // default
-byte right_dir = RIGHT_FORWARD; // default
+byte left_dir = FORWARD;         // default
+byte right_dir = FORWARD;  // default
 
 
 void setup() {
   motor_shield.begin();
   Serial.begin(9600);
 
-    Serial.setTimeout(0.000001);
+  Serial.setTimeout(0.000001);
 
   // prints ip once connected to wifi
   WiFi.begin(SSID, PWD);
@@ -40,30 +40,36 @@ void setup() {
   udp.begin(8182);
 }
 
+void auto_calibrate() {
+  Serial.print("Left Sensor On Line: ");
+  if (Serial.readString() == ("done\n")) {
+    
+  }
+}
 
 
 void loop() {
-  drive(left_motor, right_motor, whole_speed, whole_speed, left_dir, right_dir);
+  // drive(left_motor, right_motor, whole_speed, whole_speed, left_dir, right_dir);
 
-  if (Serial.readString() == ("switch\n")) {
-    left_dir = swap_dir(left_dir);
-    right_dir = swap_dir(right_dir);
-  }
+  // if (Serial.readString() == ("switch\n")) {
+  //   left_dir = swap_dir(left_dir);
+  //   right_dir = swap_dir(right_dir);
+  // }
 
-  if (udp.parsePacket()) {
-    int data = udp.available();
-    udp.read(packet, 255);
-    Serial.println(packet);
+  // if (udp.parsePacket()) {
+  //   int data = udp.available();
+  //   udp.read(packet, 255);
+  //   Serial.println(packet);
 
-    if (String(packet).substring(0, String(packet).length() - 1) == ("switch")) {
-      left_dir = swap_dir(left_dir);
-      right_dir = swap_dir(right_dir);
-    }
-    udp.beginPacket(udp.remoteIP(), udp.remotePort());
-    udp.println("send");
-    udp.endPacket();
-    for (int i = 0; i < 16; i++) {
-      packet[i] = 0;
-    }
-  }
+  //   if (String(packet).substring(0, String(packet).length() - 1) == ("switch")) {
+  //     left_dir = swap_dir(left_dir);
+  //     right_dir = swap_dir(right_dir);
+  //   }
+  //   udp.beginPacket(udp.remoteIP(), udp.remotePort());
+  //   udp.println("send");
+  //   udp.endPacket();
+  //   for (int i = 0; i < 16; i++) {
+  //     packet[i] = 0;
+  //   }
+  // }
 }
