@@ -17,15 +17,17 @@ Adafruit_DCMotor *left_motor = motor_shield.getMotor(LEFT_WHEEL);
 byte left_dir = FORWARD;   // default
 double left_sensor_read = 0;
 double left_threshold = 1024;
-// bool left_tag = false;
-// bool prev_left_tag = false;
+bool left_tag = false;
+bool prev_left_tag = false;
 
 Adafruit_DCMotor *right_motor = motor_shield.getMotor(RIGHT_WHEEL);
 byte right_dir = FORWARD;  // default
 double right_sensor_read = 0;
 double right_threshold = 1024;
-// bool right_tag = false;
-// bool prev_right_tag = false;
+bool right_tag = false;
+bool prev_right_tag = false;
+
+bool left_on = false;
 
 DIRECTION last_direction;
 
@@ -90,22 +92,29 @@ void setup() {
 void loop() {
   left_sensor_read = analogRead(LEFT_SENSOR);
   right_sensor_read = analogRead(RIGHT_SENSOR);
-
+  left_tag = abs(left_sensor_read - left_threshold) > 450 && left_sensor_read < 850;
+  right_tag = abs(right_sensor_read - right_threshold) < 450 && right_sensor_read < 850;
   if (abs(left_sensor_read - left_threshold) < 100 && abs(right_sensor_read - right_threshold) < 100) { // both off line
+    left_on = false;
+    Serial.println("DRIVE!");
     left_dir = FORWARD;
     right_dir = FORWARD;
     left_motor->run(left_dir);
     right_motor->run(right_dir);
     last_direction = DRIVE;
     delay(10);
-  } else if (abs(left_sensor_read - left_threshold) > 450 && abs(right_sensor_read - right_threshold) < 100) { // left on line, turn left
+  } else if ((abs(left_sensor_read - left_threshold) > 450 && left_sensor_read < 850) && abs(right_sensor_read - right_threshold) < 100) { // left on line, turn left
+    left_on = false;
+    Serial.println("LEFT!");
     left_dir = BACKWARD;
     right_dir = FORWARD;
     left_motor->run(left_dir);
     right_motor->run(right_dir);
     last_direction = LEFT;
     delay(10);
-  } else if (abs(left_sensor_read - left_threshold) < 100 && abs(right_sensor_read - right_threshold) < 450) { // right on line, turn right
+  } else if (abs(left_sensor_read - left_threshold) < 100 && (abs(right_sensor_read - right_threshold) < 450 && right_sensor_read < 850)) { // right on line, turn right
+    left_on = false;
+    Serial.println("RIGHT!");
     left_dir = FORWARD;
     right_dir = BACKWARD;
     left_motor->run(left_dir);
@@ -113,29 +122,48 @@ void loop() {
     last_direction = RIGHT;
     delay(10);
   } else { // both on line, default to turning right
-    switch (last_direction) {
-      case DRIVE:
-        left_dir = FORWARD;
-        right_dir = BACKWARD;
-        left_motor->run(left_dir);
-        right_motor->run(right_dir);
-        delay(10);
-        break;
-      case LEFT:
-        left_dir = FORWARD;
-        right_dir = BACKWARD;
-        left_motor->run(left_dir);
-        right_motor->run(right_dir);
-        delay(10);
-        break;
-      case RIGHT:
-        left_dir = BACKWARD;
-        right_dir = FORWARD;
-        left_motor->run(left_dir);
-        right_motor->run(right_dir);
-        delay(10);
-        break;
+    left_on = true;
+    Serial.print("Both on....");
+    if (prev_left_tag && !prev_right_tag) {
+      Serial.println("LEFT");
+      left_dir = BACKWARD;
+      right_dir = FORWARD;
+      left_motor->run(left_dir);
+      right_motor->run(right_dir);
+      last_direction = LEFT;
+      delay(10);
+    } else if (prev_right_tag && !prev_left_tag) {
+      Serial.println("RIGHT!");
+      left_dir = FORWARD;
+      right_dir = BACKWARD;
+      left_motor->run(left_dir);
+      right_motor->run(right_dir);
+      last_direction = RIGHT;
+      delay(10);
     }
+    // switch (last_direction) {
+    //   case DRIVE:
+    //     left_dir = FORWARD;
+    //     right_dir = BACKWARD;
+    //     left_motor->run(left_dir);
+    //     right_motor->run(right_dir);
+    //     delay(10);
+    //     break;
+      // case LEFT:
+        // left_dir = FORWARD;
+        // right_dir = BACKWARD;
+        // left_motor->run(left_dir);
+        // right_motor->run(right_dir);
+        // delay(10);
+        // break;
+    //   case RIGHT:
+    //     left_dir = BACKWARD;
+    //     right_dir = FORWARD;
+    //     left_motor->run(left_dir);
+    //     right_motor->run(right_dir);
+    //     delay(10);
+    //     break;
+    // }
   }
 
   if (udp.parsePacket()) {
@@ -167,4 +195,6 @@ void loop() {
 
   left_motor->setSpeed(BASE_LEFT_SPEED + added_speed);
   right_motor->setSpeed(BASE_RIGHT_SPEED + added_speed);
+  prev_left_tag = (left_on) ? prev_left_tag : left_tag;
+  prev_right_tag = (left_on) ? prev_right_tag : right_tag;
 }

@@ -9,17 +9,4 @@
 #define BASE_LEFT_SPEED 24
 #define BASE_RIGHT_SPEED 25
 
-typedef enum {
-  LEFT,
-  RIGHT,
-  DRIVE
-} DIRECTION;
-
-byte swap_dir(byte dir) {
-  switch (dir) {
-    case FORWARD:
-      return BACKWARD;
-    case BACKWARD:
-      return FORWARD;
-  }
-}
+typedef enum { LEFT, RIGHT, DRIVE } DIRECTION;

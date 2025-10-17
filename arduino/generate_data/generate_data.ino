@@ -16,7 +16,7 @@ int right_speed_data[8];
 int left_sensor_data[8];
 int right_sensor_data[8];
 
-byte counter = 8;
+byte counter = 0;
 
 Adafruit_MotorShield motor_shield = Adafruit_MotorShield();
 
@@ -164,6 +164,7 @@ void loop() {
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
     udp.print("");
     if (counter == 7) {
+      counter = 0;
       udp.print("left_speed ");
       udp.print("<");
       for (int i = 0; i < 8; i++) {
@@ -225,4 +226,5 @@ void loop() {
 
   left_motor->setSpeed(BASE_LEFT_SPEED + added_speed);
   right_motor->setSpeed(BASE_RIGHT_SPEED + added_speed);
+  counter++;
 }
