@@ -5,7 +5,7 @@
 
 #define RIGHT_FORWARD BACKWARD;
 
-#define BASE_LEFT_SPEED 26
+#define BASE_LEFT_SPEED 24
 #define BASE_RIGHT_SPEED 25
 
 byte swap_dir(byte dir) {

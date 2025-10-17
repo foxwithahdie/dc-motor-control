@@ -49,6 +49,11 @@ void auto_calibrate() {
 
 
 void loop() {
+  left_motor->setSpeed(BASE_LEFT_SPEED);
+  right_motor->setSpeed(BASE_RIGHT_SPEED);
+
+  left_motor->run(left_dir);
+  right_motor->run(right_dir);
   // drive(left_motor, right_motor, whole_speed, whole_speed, left_dir, right_dir);
 
   // if (Serial.readString() == ("switch\n")) {

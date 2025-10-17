@@ -1,49 +1,35 @@
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
-// #include <WiFiS3.h>
-// #include <WiFiUdp.h>
+#include <WiFiS3.h>
+#include <WiFiUdp.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 #include "arduino_secrets.h"
 #include "direction_functions.h"
 
-#include <PID_v1.h>
-
-// WiFiUDP udp;
-// int port = 8182;
-// char packet[16];
-// int dataLength;
+WiFiUDP udp;
+int port = 8182;
+char packet[16];
+int dataLength;
 
 Adafruit_MotorShield motor_shield = Adafruit_MotorShield();
 
 Adafruit_DCMotor *left_motor = motor_shield.getMotor(LEFT_WHEEL);
 byte left_dir = FORWARD;   // default
-double left_speed = 0;
 double left_sensor_read = 0;
-double left_threshold = 0;
-double left_prop = 10,
-       left_int = 0,
-       left_deriv = 0;
-
-PID left_pid_handler = PID( 
-                            &left_sensor_read, &left_speed, &left_threshold,
-                            left_prop, left_int, left_deriv,
-                            P_ON_E, DIRECT
-                          );
+double left_threshold = 1024;
+// bool left_tag = false;
+// bool prev_left_tag = false;
 
 Adafruit_DCMotor *right_motor = motor_shield.getMotor(RIGHT_WHEEL);
 byte right_dir = FORWARD;  // default
-double right_speed = 0;
 double right_sensor_read = 0;
-double right_threshold = 0;
-double right_prop = 10,
-       right_int = 0,
-       right_deriv = 0;
+double right_threshold = 1024;
+// bool right_tag = false;
+// bool prev_right_tag = false;
 
-PID right_pid_handler = PID(
-                            &right_sensor_read, &right_speed, &right_threshold,
-                            right_prop, right_int, right_deriv,
-                            P_ON_E, DIRECT
-                          );
+DIRECTION last_direction;
+
+int added_speed = 0;
 
 
 void auto_calibrate() {
@@ -62,7 +48,6 @@ void auto_calibrate() {
       left_threshold = left_sensor_read_sum / 100;
       Serial.println("Left Sensor Done!");
   }
-  Serial.println();
   Serial.flush();
   Serial.print("Is the Right Sensor on the Line?: ");
   while (Serial.available() <= 0);
@@ -80,37 +65,106 @@ void auto_calibrate() {
   Serial.println("Done!");
 }
 
+
 void setup() {
   motor_shield.begin();
   Serial.begin(9600);
   delay(1000);
+
+  WiFi.begin(SSID, PWD);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(100);
+    Serial.print("Connecting...");
+  }
+  Serial.print("IP = ");
+  Serial.println(WiFi.localIP());
+
+  udp.begin(8182);
+
   pinMode(LEFT_SENSOR, INPUT);
   pinMode(RIGHT_SENSOR, INPUT);
   auto_calibrate();
-
-  left_pid_handler.SetMode(AUTOMATIC);
-  right_pid_handler.SetMode(AUTOMATIC);
 }
+
 
 void loop() {
   left_sensor_read = analogRead(LEFT_SENSOR);
   right_sensor_read = analogRead(RIGHT_SENSOR);
-  left_pid_handler.Compute();
-  right_pid_handler.Compute();
 
+  if (abs(left_sensor_read - left_threshold) < 100 && abs(right_sensor_read - right_threshold) < 100) { // both off line
+    left_dir = FORWARD;
+    right_dir = FORWARD;
+    left_motor->run(left_dir);
+    right_motor->run(right_dir);
+    last_direction = DRIVE;
+    delay(10);
+  } else if (abs(left_sensor_read - left_threshold) > 450 && abs(right_sensor_read - right_threshold) < 100) { // left on line, turn left
+    left_dir = BACKWARD;
+    right_dir = FORWARD;
+    left_motor->run(left_dir);
+    right_motor->run(right_dir);
+    last_direction = LEFT;
+    delay(10);
+  } else if (abs(left_sensor_read - left_threshold) < 100 && abs(right_sensor_read - right_threshold) < 450) { // right on line, turn right
+    left_dir = FORWARD;
+    right_dir = BACKWARD;
+    left_motor->run(left_dir);
+    right_motor->run(right_dir);
+    last_direction = RIGHT;
+    delay(10);
+  } else { // both on line, default to turning right
+    switch (last_direction) {
+      case DRIVE:
+        left_dir = FORWARD;
+        right_dir = BACKWARD;
+        left_motor->run(left_dir);
+        right_motor->run(right_dir);
+        delay(10);
+        break;
+      case LEFT:
+        left_dir = FORWARD;
+        right_dir = BACKWARD;
+        left_motor->run(left_dir);
+        right_motor->run(right_dir);
+        delay(10);
+        break;
+      case RIGHT:
+        left_dir = BACKWARD;
+        right_dir = FORWARD;
+        left_motor->run(left_dir);
+        right_motor->run(right_dir);
+        delay(10);
+        break;
+    }
+  }
+
+  if (udp.parsePacket()) {
+    int data = udp.available();
+    udp.read(packet, 255);
+    Serial.println(packet);
+
+    if (String(packet).substring(0, String(packet).length() - 1) == ("up")) {
+      added_speed += 10;
+    } else if (String(packet).substring(0, String(packet).length() - 1) == ("down")) {
+      added_speed -= 10;
+    }
+    udp.beginPacket(udp.remoteIP(), udp.remotePort());
+      udp.println("send");
+    udp.endPacket();
+
+    for (int i = 0; i < 16; i++) {
+      packet[i] = 0;
+    }
+  }
 
   Serial.println(" --------------- CURRENT READ --------------- ");
-  Serial.print("Left Speed: ");
-  Serial.println(left_speed);
-  Serial.print("Right Speed: ");
-  Serial.println(right_speed);
+  Serial.print("Added Speed: ");
+  Serial.println(added_speed);
   Serial.print("Left Sensor Read: ");
   Serial.println(left_sensor_read);
   Serial.print("Right Sensor Read: ");
   Serial.println(right_sensor_read);
-  
-  drive(left_motor, right_motor,
-        left_speed, right_speed,
-        left_dir, right_dir
-  ); 
+
+  left_motor->setSpeed(BASE_LEFT_SPEED + added_speed);
+  right_motor->setSpeed(BASE_RIGHT_SPEED + added_speed);
 }
