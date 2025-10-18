@@ -20,25 +20,16 @@ def main() -> None:
 
     start_time = time.time()
     try:
-        while (time.time() - start_time) < 60:
-            sock.sendto("".encode(), (ip, port))
+        while (time.time() - start_time) < 30:
+            sock.sendto("send".encode(), (ip, port))
             try:
                 response, _ = sock.recvfrom(buffer)
                 if len(response.decode()) > 1:
-                    response_type, response_values = tuple(response.decode().split(" "))
-                    response_data = [
-                        int(data_point)
-                        for data_point in response_values.strip("<>").split(",")
-                    ]
-                    match response_type:
-                        case "left_speed":
-                            left_speed_data += response_data
-                        case "right_speed":
-                            right_speed_data += response_data
-                        case "left_sensor":
-                            left_sensor_data += response_data
-                        case "right_sensor":
-                            right_sensor_data += response_data
+                    total_response = {data.split(" ")[0]: list(map(lambda val: int(val), data.split(" ")[1].strip("<>").split(","))) for data in response.decode().splitlines()}
+                    left_speed_data += total_response['left_speed']
+                    right_speed_data += total_response['right_speed']
+                    left_sensor_data += total_response['left_sensor']
+                    right_sensor_data += total_response['right_sensor']
             except socket.timeout:
                 pass
     except KeyboardInterrupt:

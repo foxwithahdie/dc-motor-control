@@ -5,8 +5,8 @@
 
 #define RIGHT_FORWARD BACKWARD;
 
-#define BASE_LEFT_SPEED 24
-#define BASE_RIGHT_SPEED 25
+#define BASE_LEFT_SPEED 50
+#define BASE_RIGHT_SPEED 50
 
 byte swap_dir(byte dir) {
   switch (dir) {

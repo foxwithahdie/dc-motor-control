@@ -6,7 +6,13 @@
 #define LEFT_SENSOR A0
 #define RIGHT_SENSOR A1
 
-#define BASE_LEFT_SPEED 24
-#define BASE_RIGHT_SPEED 25
+#define BASE_LEFT_SPEED 26
+#define BASE_RIGHT_SPEED 29
 
-typedef enum { LEFT, RIGHT, DRIVE } DIRECTION;
+#define TURN_SPEED 10
+
+typedef enum {
+  LEFT,
+  RIGHT,
+  DRIVE
+} DIRECTION;

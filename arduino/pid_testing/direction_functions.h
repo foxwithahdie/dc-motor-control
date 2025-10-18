@@ -1,3 +1,5 @@
+// Useful constants for code
+
 #define byte uint8_t
 
 #define LEFT_WHEEL 1
@@ -6,10 +8,12 @@
 #define LEFT_SENSOR A0
 #define RIGHT_SENSOR A1
 
-#define BASE_LEFT_SPEED 30
-#define BASE_RIGHT_SPEED 32
+#define BASE_LEFT_SPEED 26
+#define BASE_RIGHT_SPEED 29
 
-#define TURN_SPEED 60
+#define DEFAULT_BOTH_ON_TIME 200
+
+#define TURN_SPEED 10
 
 typedef enum {
   LEFT,

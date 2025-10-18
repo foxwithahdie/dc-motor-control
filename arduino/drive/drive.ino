@@ -1,16 +1,16 @@
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
-#include <WiFiS3.h>
-#include <WiFiUdp.h>
+// #include <WiFiS3.h>
+// #include <WiFiUdp.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 #include "direction_functions.h"
-#include "arduino_secrets.h"
+// #include "arduino_secrets.h"
 
 // wifi/udp values for sending data via wifi
-WiFiUDP udp;
-int port = 8182;
-char packet[16];
-int dataLength;
+// WiFiUDP udp;
+// int port = 8182;
+// char packet[16];
+// int dataLength;
 
 Adafruit_MotorShield motor_shield = Adafruit_MotorShield();
 
@@ -26,26 +26,26 @@ void setup() {
   motor_shield.begin();
   Serial.begin(9600);
 
-  Serial.setTimeout(0.000001);
+  // Serial.setTimeout(0.000001);
 
   // prints ip once connected to wifi
-  WiFi.begin(SSID, PWD);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(100);
-    Serial.print("Connecting...");
-  }
-  Serial.print("IP = ");
-  Serial.println(WiFi.localIP());
+  // WiFi.begin(SSID, PWD);
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(100);
+  //   Serial.print("Connecting...");
+  // }
+  // Serial.print("IP = ");
+  // Serial.println(WiFi.localIP());
 
-  udp.begin(8182);
+  // udp.begin(8182);
 }
 
-void auto_calibrate() {
-  Serial.print("Left Sensor On Line: ");
-  if (Serial.readString() == ("done\n")) {
+// void auto_calibrate() {
+//   Serial.print("Left Sensor On Line: ");
+//   if (Serial.readString() == ("done\n")) {
     
-  }
-}
+//   }
+// }
 
 
 void loop() {
